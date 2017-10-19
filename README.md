@@ -24,18 +24,30 @@ Heroku Setup
 ------------
 
 Create the app, enable papertrail to record logs, and set the configuration
-variables.
+variables.  Note: if you have more than one Heroku app associated with your
+login, most heroku command lines after "create" (see below) should include 
+"-a <app_name>" on the end of the command line.  You can also do everything 
+from the Heroku web page, https://dashboard.heroku.com/apps/<app_name>, 
+instead of the command line- however, that's not shown here.
 
 ```bash
 # heroku login
-  # chapel_github@cray.com + password from Keeppass
-  # after the first time, the heroku login persists somewhere for a while
-heroku create [<app_name>]
+  # Create your own login, or use 
+  # chapel_github@cray.com + password from Keeppass.
+  # After the first time, the heroku login persists somewhere for a while
+heroku create <app_name>
 heroku addons:add papertrail
 heroku config:set GITHUB_COMMIT_EMAILER_SEND_FROM_AUTHOR=<true>
 heroku config:set GITHUB_COMMIT_EMAILER_SENDER=<sender_email>
 heroku config:set GITHUB_COMMIT_EMAILER_RECIPIENT=<recipient_email>
 heroku config:set GITHUB_COMMIT_EMAILER_SECRET=<the_secret>
+```
+
+An optional "RECIPIENT_CC" e-mail address may be given, in which case the messages
+are Cc'd to that address. 
+
+```bash
+heroku config:set GITHUB_COMMIT_EMAILER_RECIPIENT_CC=<Cc_email>
 ```
 
 If `GITHUB_COMMIT_EMAILER_SEND_FROM_AUTHOR` is set (to any value), the pusher
@@ -68,8 +80,9 @@ heroku addons:add sendgrid
 heroku addons:open sendgrid
 ```
 
-* Go to "Global Settings".
-* Check the "Don't convert plain text emails to HTML" box and "Update".
+* Go to "Settings"-> "Mail Settings".
+* Activate the "Plain Content" settings (ie, "Turn on if you don't want to 
+  convert your plain text email to HTML").
 
 Rollbar Setup
 -------------
@@ -88,13 +101,25 @@ necessary if you have multiple environment configured to use rollbar.
 heroku config:set GITHUB_COMMIT_EMAILER_ROLLBAR_ENV=<env_name>
 ```
 
+Deploy the Heroku App
+---------------------
+
+I found this easier to do from the Heroku web page,
+https://dashboard.heroku.com/apps/<app_name>/deploy/github. (ie, Heroku 
+dashboard for app <app_name>, "Deploy" tab, deployment method "GitHub"). 
+If you "connect" the Heroku app to this GitHub repo, you can Deploy right
+from there. Because "connecting" means allowing auto authentication
+to GitHub from Heroku, I preferred not to Deploy as chapel_github@cray.com. 
+Instead, I deployed from my personal Heroku account, which I added to the
+Heroku app as a "collaborator" (see "Access" tab). 
+
 GitHub Setup
 ------------
 
 Add webhook to repo to use this emailer. Be sure to set the secret to the value
-of `GITHUB_COMMIT_EMAILER_SECRET`. The webhook URL is
-`<heroku_url>/commit-email` and it must send "push" events. Show the heroku app
-url with:
+of `GITHUB_COMMIT_EMAILER_SECRET` (you are free to generate any string). 
+The webhook URL is `<heroku_url>/commit-email` and it must send "push" events in
+JSON format. Show the heroku app url with:
 
 ```bash
 heroku domains
@@ -174,9 +199,11 @@ tox -e flake8
 tox -e coverage
 ```
 
-Update: 2017-10-04
+Update: 2017-10-19
 ------------------
 
-Added GITHUB_COMMIT_EMAILER_RECIPIENT_CC
+Readme is updated as deployed to Heroku app chapel-commit-emailer2
+(https://dashboard.heroku.com/apps/chapel-commit-emailer2)
+
 
 [0]: https://toolbelt.heroku.com/
