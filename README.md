@@ -81,8 +81,9 @@ heroku addons:open sendgrid
 ```
 
 * Go to "Settings"-> "Mail Settings".
-* Activate the "Plain Content" settings (ie, "Turn on if you don't want to 
-  convert your plain text email to HTML").
+* Activate "Plain Content - Convert your plain text emails to HTML."
+  (ie, "Turn on if you don't want to convert your plain text email to HTML" -
+  we want plain content, not HTML)
 
 Rollbar Setup
 -------------
@@ -204,6 +205,5 @@ Update: 2017-10-19
 
 Readme is updated as deployed to Heroku app chapel-commit-emailer2
 (https://dashboard.heroku.com/apps/chapel-commit-emailer2)
-
 
 [0]: https://toolbelt.heroku.com/
