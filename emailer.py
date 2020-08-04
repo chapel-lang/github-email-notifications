@@ -207,10 +207,7 @@ def _get_subject(repo, message):
 def _valid_signature(gh_signature, body, secret):
     """Returns True if GitHub signature is valid. False, otherwise."""
     def to_str(s):
-#        if isinstance(s, unicode):
-            return str(s)
-#        else:
-#            return s
+        return str(s)
 
     gh_signature = to_str(gh_signature)
     body = to_str(body)
