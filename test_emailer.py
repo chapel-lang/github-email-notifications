@@ -4,7 +4,7 @@ import hmac
 import json
 import mock
 import os
-import sha
+import hashlib
 import unittest
 import uuid
 
