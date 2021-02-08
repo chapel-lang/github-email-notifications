@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import envelopes
@@ -11,7 +12,7 @@ import os
 import os.path
 import rollbar
 import rollbar.contrib.flask
-import sha
+import hashlib
 
 app = Flask(__name__)
 
@@ -204,15 +205,12 @@ def _get_subject(repo, message):
 def _valid_signature(gh_signature, body, secret):
     """Returns True if GitHub signature is valid. False, otherwise."""
     def to_str(s):
-        if isinstance(s, unicode):
-            return str(s)
-        else:
-            return s
+        return str(s)
 
     gh_signature = to_str(gh_signature)
     body = to_str(body)
     secret = to_str(secret)
 
-    expected_hmac = hmac.new(secret, body, sha)
+    expected_hmac = hmac.new(secret, body, hashlib.sha1())
     expected_signature = to_str('sha1=' + expected_hmac.hexdigest())
     return hmac.compare_digest(expected_signature, gh_signature)

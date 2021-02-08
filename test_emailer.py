@@ -4,7 +4,7 @@ import hmac
 import json
 import mock
 import os
-import sha
+import hashlib
 import unittest
 import uuid
 
@@ -323,7 +323,7 @@ class EmailerTests(unittest.TestCase):
         """Verify _valid_signature returns true when signature matches."""
         body = '{"rock": "on"}'
         secret = str(uuid.uuid4())
-        h = hmac.new(secret, body, sha)
+        h = hmac.new(secret, body, hashlib.sha1())
         sig = 'sha1=' + h.hexdigest()
         gh_sig = sig
         self.assertTrue(emailer._valid_signature(gh_sig, body, secret))
@@ -333,16 +333,16 @@ class EmailerTests(unittest.TestCase):
         signature is unicode."""
         body = '{"rock": "on"}'
         secret = str(uuid.uuid4())
-        h = hmac.new(secret, body, sha)
+        h = hmac.new(secret, body, hashlib.sha1())
         sig = 'sha1=' + h.hexdigest()
-        gh_sig = unicode(sig)
+        gh_sig = sig
         self.assertTrue(emailer._valid_signature(gh_sig, body, secret))
 
     def test_valid_signature__false(self):
         """Verify _valid_signature returns False when signature does
         not match."""
         self.assertFalse(
-            emailer._valid_signature(str(unicode('adsf')), 'asdf', 'my-secret')
+            emailer._valid_signature(str('adsf'), 'asdf', 'my-secret')
         )
 
 
