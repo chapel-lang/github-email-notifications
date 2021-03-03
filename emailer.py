@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-import envelopes
-import envelopes.connstack
 from flask import Flask
 import flask
 import hmac
@@ -12,6 +10,8 @@ import os.path
 import rollbar
 import rollbar.contrib.flask
 import sha
+import smtplib
+from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
@@ -36,21 +36,6 @@ def init_rollbar():
     )
     flask.got_request_exception.connect(
         rollbar.contrib.flask.report_exception, app)
-
-
-@app.before_request
-def app_before_request():
-    envelopes.connstack.push_connection(
-        envelopes.SendGridSMTP(
-            login=os.environ.get('SENDGRID_USERNAME'),
-            password=os.environ.get('SENDGRID_PASSWORD'))
-    )
-
-
-@app.after_request
-def app_after_request(response):
-    envelopes.connstack.pop_connection()
-    return response
 
 
 @app.route('/')
@@ -80,6 +65,8 @@ def commit_email():
 
     json_dict = flask.request.get_json()
     logging.info('json body: {0}'.format(json_dict))
+    if "Merge pull request" not in json_dict['head_commit']['message']:
+        return 'nope'
 
     if json_dict['deleted']:
         logging.info('Branch was deleted, skipping email.')
@@ -124,7 +111,7 @@ def _send_email(msg_info):
     """Create and send commit notification email."""
     sender = _get_sender(msg_info['pusher_email'])
     recipient = os.environ.get('GITHUB_COMMIT_EMAILER_RECIPIENT')
-
+    
     if sender is None or recipient is None:
         logging.error('sender and recipient config vars must be set.')
         raise ValueError('sender and recipient config vars must be set.')
@@ -137,41 +124,43 @@ def _send_email(msg_info):
     reply_to = os.environ.get('GITHUB_COMMIT_EMAILER_REPLY_TO', None)
     approved = os.environ.get('GITHUB_COMMIT_EMAILER_APPROVED_HEADER', None)
     subject = _get_subject(msg_info['repo'], msg_info['message'])
+    recipients = recipient_cc + [recipient]
+
+    port = 587
+    smtp_server = "smtp.mailgun.org"
+    login = os.environ.get('MAILGUN_LOGIN',None)
+    password = os.environ.get('MAILGUN_PASSWORD',None)
+    loginA = login.encode("ascii")
+    passwordA = password.encode("ascii")
 
     body = """Branch: {branch}
-Revision: {revision}
-Author: {pusher}
-Log Message:
+    Revision: {revision}
+    Author: {pusher}
+    Log Message:
 
-{message}
+    {message}
 
-Modified Files:
-{changed_files}
+    Modified Files:
+    {changed_files}
 
-Compare: {compare_url}
-""".format(**msg_info)
-
-    msg = envelopes.Envelope(
-        to_addr=recipient,
-        from_addr=sender,
-        subject=subject,
-        text_body=body,
-        cc_addr=recipient_cc,
-    )
-
+    Compare: {compare_url}
+    """.format(**msg_info)
+    
+    message = MIMEText(body)
+    message["Subject"] = subject
+    message["From"] = sender
+    message["To"] = recipient
+    message["Cc"] = recipient_ccs
     if reply_to is not None:
-        msg.add_header('Reply-To', reply_to)
+        message["reply-to"] = reply_to
     if approved is not None:
-        msg.add_header('Approved', approved)
-
-    # Disable SendGrid click tracking.
-    send_grid_disable_click_tracking = json.dumps(
-        {'filters': {'clicktrack': {'settings': {'enable': 0}}}})
-    msg.add_header('X-SMTPAPI', send_grid_disable_click_tracking)
-
-    smtp = envelopes.connstack.get_current_connection()
-    logging.info('Sending email: {0}'.format(msg))
-    smtp.send(msg)
+        message["approved"] = approved
+        
+    server = smtplib.SMTP(smtp_server, port)
+    server.set_debuglevel(1)
+    server.login(loginA, passwordA)
+    server.sendmail(sender, recipient, message.as_string())
+    server.quit()
 
 
 def _get_sender(pusher_email):
