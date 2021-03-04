@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from flask import Flask
 import flask
 import hmac
-import json
 import logging
 import os
 import os.path
@@ -111,7 +110,7 @@ def _send_email(msg_info):
     """Create and send commit notification email."""
     sender = _get_sender(msg_info['pusher_email'])
     recipient = os.environ.get('GITHUB_COMMIT_EMAILER_RECIPIENT')
-    
+
     if sender is None or recipient is None:
         logging.error('sender and recipient config vars must be set.')
         raise ValueError('sender and recipient config vars must be set.')
@@ -128,8 +127,8 @@ def _send_email(msg_info):
 
     port = 587
     smtp_server = "smtp.mailgun.org"
-    login = os.environ.get('MAILGUN_LOGIN',None)
-    password = os.environ.get('MAILGUN_PASSWORD',None)
+    login = os.environ.get('MAILGUN_LOGIN', None)
+    password = os.environ.get('MAILGUN_PASSWORD', None)
     loginA = login.encode("ascii")
     passwordA = password.encode("ascii")
 
@@ -145,7 +144,7 @@ def _send_email(msg_info):
 
     Compare: {compare_url}
     """.format(**msg_info)
-    
+
     message = MIMEText(body)
     message["Subject"] = subject
     message["From"] = sender
@@ -155,11 +154,11 @@ def _send_email(msg_info):
         message["reply-to"] = reply_to
     if approved is not None:
         message["approved"] = approved
-        
+
     server = smtplib.SMTP(smtp_server, port)
     server.set_debuglevel(1)
     server.login(loginA, passwordA)
-    server.sendmail(sender, recipient, message.as_string())
+    server.sendmail(sender, recipients, message.as_string())
     server.quit()
 
 
