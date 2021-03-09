@@ -110,7 +110,6 @@ def _send_email(msg_info):
     """Create and send commit notification email."""
     sender = _get_sender(msg_info['pusher_email'])
     recipient = os.environ.get('GITHUB_COMMIT_EMAILER_RECIPIENT')
-
     if sender is None or recipient is None:
         logging.error('sender and recipient config vars must be set.')
         raise ValueError('sender and recipient config vars must be set.')
@@ -123,7 +122,10 @@ def _send_email(msg_info):
     reply_to = os.environ.get('GITHUB_COMMIT_EMAILER_REPLY_TO', None)
     approved = os.environ.get('GITHUB_COMMIT_EMAILER_APPROVED_HEADER', None)
     subject = _get_subject(msg_info['repo'], msg_info['message'])
-    recipients = recipient_cc + [recipient]
+    if recipient_cc is not None:
+        recipients = recipient_cc + [recipient]
+    else:
+        recipients = [recipient]
 
     port = 587
     smtp_server = "smtp.mailgun.org"
@@ -145,7 +147,7 @@ def _send_email(msg_info):
     Compare: {compare_url}
     """.format(**msg_info)
 
-    message = MIMEText(body)
+    message = MIMEText(body, "plain", "utf-8")
     message["Subject"] = subject
     message["From"] = sender
     message["To"] = recipient

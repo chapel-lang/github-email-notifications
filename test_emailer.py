@@ -30,7 +30,8 @@ class EmailerTests(unittest.TestCase):
             'repo': 'TESTING/test',
             'branch': 'the/TEST/master',
             'revision': 'some-TEST-sha1',
-            'message': 'A lovely TEST\n\nTEST commit message.',
+            'message': 'Merge pull request A lovely TEST\n\nTEST commit'
+            ' message.',
             'changed_files': ('R a.out\n'
                               'R gen\n'
                               'M README.md\n'
@@ -41,7 +42,7 @@ class EmailerTests(unittest.TestCase):
             'compare_url': 'http://TEST.fake',
         }
         self.sender = 'noreply@fake.fake'
-        self.recipient = 'recip@fake.fake'
+        self.recipient = 'joseph.tursi@hpe.com'
         self.reply_to = 'reply-to-me@fake.fake'
         self.send_grid_header = json.dumps(
             {'filters': {'clicktrack': {'settings': {'enable': 0}}}})
@@ -132,7 +133,8 @@ class EmailerTests(unittest.TestCase):
         mock_sig.return_value = True
         r = self.app.post('/commit-email',
                           headers=self.headers,
-                          data=json.dumps({'deleted': True}))
+                          data=json.dumps({'head_commit': {'message': 'Test'},
+                                           'deleted': True}))
         self.assertEqual(200, r.status_code)
         self.assertEqual(0, mock_send.call_count)
 
@@ -151,7 +153,7 @@ class EmailerTests(unittest.TestCase):
             'pusher': {'name': 'the-tester', 'email': 'the@example.com'},
             'head_commit': {
                 'id': 'some-sha1',
-                'message': 'A lovely\n\ncommit message.',
+                'message': 'Merge pull request: A lovely\n\ncommit message.',
                 'added': [],
                 'removed': ['a.out', 'gen'],
                 'modified': ['README.md', 'README', 'LICENSE'],
@@ -161,7 +163,7 @@ class EmailerTests(unittest.TestCase):
             'repo': 'testing/test',
             'branch': 'the/master',
             'revision': 'some-sha1'[:7],
-            'message': 'A lovely\n\ncommit message.',
+            'message': 'Merge pull request: A lovely\n\ncommit message.',
             'changed_files': ('R a.out\n'
                               'R gen\n'
                               'M README.md\n'
@@ -207,65 +209,71 @@ class EmailerTests(unittest.TestCase):
 
     def check_msg(self, actual_msg):
         """Verify recipient and sender on sent message."""
-        self.assertEqual([self.recipient], actual_msg.to_addr)
-        self.assertEqual(self.sender, actual_msg.from_addr)
-        self.assertEqual(
-            self.send_grid_header, actual_msg.headers.get('X-SMTPAPI'))
-        self.assertEqual(
-            '[Chapel Merge] TEST commit message.', actual_msg._subject)
+        print(actual_msg)
+        self.assertEqual([self.recipient], actual_msg[1])
+        self.assertEqual(self.sender, actual_msg[0])
+        assert '[Chapel Merge] TEST commit message.' in actual_msg[2]
 
-    @mock.patch('envelopes.connstack.get_current_connection')
-    def test_send_email__no_reply_to(self, mock_send):
+    @mock.patch('smtplib.SMTP')
+    def test_send_email__no_reply_to(self, mock_sendmail):
         """Verify email is sent as expected when reply-to is not configured."""
         self.prep_env()
         if 'GITHUB_COMMIT_EMAILER_REPLY_TO' in os.environ:
             del os.environ['GITHUB_COMMIT_EMAILER_REPLY_TO']
         emailer._send_email(self.msg_info)
 
-        mock_send.return_value.send.assert_called_once_with(mock.ANY)
-        actual_msg = mock_send.return_value.send.call_args[0][0]
+        mock_sendmail.return_value.sendmail.assert_called_once_with(mock.ANY,
+                                                                    mock.ANY,
+                                                                    mock.ANY)
+        actual_msg = mock_sendmail.return_value.sendmail.call_args[0]
         self.check_msg(actual_msg)
-        self.assertEqual(None, actual_msg.headers.get('Reply-To'))
+        assert "reply-to" not in actual_msg[2]
 
-    @mock.patch('envelopes.connstack.get_current_connection')
-    def test_send_email__reply_to(self, mock_send):
+    @mock.patch('smtplib.SMTP')
+    def test_send_email__reply_to(self, mock_sendmail):
         """Verify email is sent as expected when reply-to is configured."""
         self.prep_env()
         os.environ['GITHUB_COMMIT_EMAILER_REPLY_TO'] = self.reply_to
         emailer._send_email(self.msg_info)
 
-        mock_send.return_value.send.assert_called_once_with(mock.ANY)
-        actual_msg = mock_send.return_value.send.call_args[0][0]
+        mock_sendmail.return_value.sendmail.assert_called_once_with(mock.ANY,
+                                                                    mock.ANY,
+                                                                    mock.ANY)
+        actual_msg = mock_sendmail.return_value.sendmail.call_args[0]
         self.check_msg(actual_msg)
-        self.assertEqual(self.reply_to, actual_msg.headers.get('Reply-To'))
+        assert "reply-to" in actual_msg[2]
 
-    @mock.patch('envelopes.connstack.get_current_connection')
-    def test_send_email__approved(self, mock_send):
+    @mock.patch('smtplib.SMTP')
+    def test_send_email__approved(self, mock_sendmail):
         """Verify approved header is added when config is set."""
         self.prep_env()
         os.environ['GITHUB_COMMIT_EMAILER_APPROVED_HEADER'] = 'my-super-secret'
         emailer._send_email(self.msg_info)
 
-        mock_send.return_value.send.assert_called_once_with(mock.ANY)
-        actual_msg = mock_send.return_value.send.call_args[0][0]
+        mock_sendmail.return_value.sendmail.assert_called_once_with(mock.ANY,
+                                                                    mock.ANY,
+                                                                    mock.ANY)
+        actual_msg = mock_sendmail.return_value.sendmail.call_args[0]
         self.check_msg(actual_msg)
-        self.assertEqual('my-super-secret', actual_msg.headers.get('Approved'))
+        assert "approved" in actual_msg[2]
 
-    @mock.patch('envelopes.connstack.get_current_connection')
-    def test_send_email__no_approved(self, mock_send):
+    @mock.patch('smtplib.SMTP')
+    def test_send_email__no_approved(self, mock_sendmail):
         """Verify approved header is not added when config is not set."""
         self.prep_env()
         if 'GITHUB_COMMIT_EMAILER_APPROVED_HEADER' in os.environ:
             del os.environ['GITHUB_COMMIT_EMAILER_APPROVED_HEADER']
         emailer._send_email(self.msg_info)
 
-        mock_send.return_value.send.assert_called_once_with(mock.ANY)
-        actual_msg = mock_send.return_value.send.call_args[0][0]
+        mock_sendmail.return_value.sendmail.assert_called_once_with(mock.ANY,
+                                                                    mock.ANY,
+                                                                    mock.ANY)
+        actual_msg = mock_sendmail.return_value.sendmail.call_args[0]
         self.check_msg(actual_msg)
-        self.assertEqual(None, actual_msg.headers.get('Approved'))
+        assert "approved" not in actual_msg[2]
 
-    @mock.patch('envelopes.connstack.get_current_connection')
-    def test_send_email__unicode_body(self, mock_send):
+    @mock.patch('smtplib.SMTP')
+    def test_send_email__unicode_body(self, mock_sendmail):
         """Verify unicode characters in msg_info are handled."""
         msg_info = self.msg_info
         msg_info['message'] += '\n\u2026'
@@ -273,8 +281,10 @@ class EmailerTests(unittest.TestCase):
         self.prep_env()
         emailer._send_email(msg_info)
 
-        mock_send.return_value.send.assert_called_once_with(mock.ANY)
-        actual_msg = mock_send.return_value.send.call_args[0][0]
+        mock_sendmail.return_value.sendmail.assert_called_once_with(mock.ANY,
+                                                                    mock.ANY,
+                                                                    mock.ANY)
+        actual_msg = mock_sendmail.return_value.sendmail.call_args[0]
         self.check_msg(actual_msg)
 
     def test_get_sender__from_author(self):
