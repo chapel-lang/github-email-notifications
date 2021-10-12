@@ -82,6 +82,10 @@ def commit_email():
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
 
+    commit_SHA = json_dict['after']
+    url = f"https://api.github.com/repos/chapel-lang/chapel/commits/{0}/pulls".format(commit_SHA)
+    prURL = requests.get(url).json()[0]['html_url']
+
     msg_info = {
         'repo': json_dict['repository']['full_name'],
         'branch': json_dict['ref'],
@@ -91,6 +95,7 @@ def commit_email():
         'pusher': json_dict['pusher']['name'],
         'pusher_email': pusher_email,
         'compare_url': json_dict['compare'],
+        'pr_url': prURL,
     }
     _send_email(msg_info)
 
@@ -137,6 +142,7 @@ def _send_email(msg_info):
     body = """Branch: {branch}
     Revision: {revision}
     Author: {pusher}
+    Link: {pr_url}
     Log Message:
 
     {message}
