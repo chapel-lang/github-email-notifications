@@ -84,8 +84,11 @@ def commit_email():
 
     commit_SHA = json_dict['after']
     url = f"https://api.github.com/repos/chapel-lang/chapel/commits/{0}/pulls".format(commit_SHA)
-    prURL = "Unavailable"
-    prURL = requests.get(url, timeout=10).json()[0]['html_url']
+    try:
+        prURL = requests.get(url, timeout=10).json()[0]['html_url']
+    except Exception as e:
+        prURL = "Unavailable"
+        logger.error(f'Could not getch PR url from github: {e}')
 
     msg_info = {
         'repo': json_dict['repository']['full_name'],
