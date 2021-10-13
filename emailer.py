@@ -16,6 +16,8 @@ app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
+github_owner = chapel-lang
+github_repo = chapel
 
 @app.before_first_request
 def init_rollbar():
@@ -82,8 +84,7 @@ def commit_email():
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
 
-    commit_SHA = json_dict['after']
-    url = f"https://api.github.com/repos/chapel-lang/chapel/commits/{0}/pulls".format(commit_SHA)
+    url = f"https://api.github.com/repos/{0}/{1}/commits/{2}/pulls".format(github_owner,github_repo,json_dict['after'])
     try:
         prURL = requests.get(url, timeout=10).json()[0]['html_url']
     except Exception as e:
