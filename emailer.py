@@ -84,7 +84,7 @@ def commit_email():
 
     commit_SHA = json_dict['after']
     url = f"https://api.github.com/repos/chapel-lang/chapel/commits/{0}/pulls".format(commit_SHA)
-    prURL = requests.get(url).json()[0]['html_url']
+    prURL = requests.get(url, timeout=10).json()[0]['html_url']
 
     msg_info = {
         'repo': json_dict['repository']['full_name'],
