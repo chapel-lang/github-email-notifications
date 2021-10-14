@@ -138,8 +138,6 @@ def _send_email(msg_info):
     smtp_server = "smtp.mailgun.org"
     login = os.environ.get('MAILGUN_LOGIN', None)
     password = os.environ.get('MAILGUN_PASSWORD', None)
-    loginA = login
-    passwordA = password
 
     body = """Branch: {branch}
     Revision: {revision}
@@ -167,7 +165,7 @@ def _send_email(msg_info):
 
     server = smtplib.SMTP(smtp_server, port)
     server.set_debuglevel(1)
-    server.login(loginA, passwordA)
+    server.login(login, password)
     server.sendmail(sender, recipients, message.as_string())
     server.quit()
 
