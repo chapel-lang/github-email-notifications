@@ -95,7 +95,8 @@ def commit_email():
         logging.info(f"CData: {cData}")
         status = githubData.status_code
         logging.info(f"Github Response: {status}")
-        prURL = githubData[0]['html_url']
+        prURL = jData[0]['html_url']
+        logging.info(f"URL:{prURL}")
     except Exception as e:
         prURL = "Unavailable"
         logging.error(f'Could not getch PR url from github: {e}')
