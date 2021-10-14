@@ -10,6 +10,7 @@ import rollbar
 import rollbar.contrib.flask
 import sha
 import smtplib
+import requests
 from email.mime.text import MIMEText
 
 app = Flask(__name__)
@@ -84,12 +85,12 @@ def commit_email():
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
 
-    url = f"https://api.github.com/repos/{0}/{1}/commits/{2}/pulls".format(github_owner,github_repo,json_dict['after'])
+    url = f"https://api.github.com/repos/{0}/{1}/commits/{2}/pulls".format(GITHUB_OWNER,GITHUB_REPO,json_dict['after'])
     try:
         prURL = requests.get(url, timeout=10).json()[0]['html_url']
     except Exception as e:
         prURL = "Unavailable"
-        logger.error(f'Could not getch PR url from github: {e}')
+        logging.error(f'Could not getch PR url from github: {e}')
 
     msg_info = {
         'repo': json_dict['repository']['full_name'],
@@ -205,7 +206,7 @@ def _get_subject(repo, message):
 def _valid_signature(gh_signature, body, secret):
     """Returns True if GitHub signature is valid. False, otherwise."""
     def to_str(s):
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             return str(s)
         else:
             return s
