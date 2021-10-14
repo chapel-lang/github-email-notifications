@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 
 from flask import Flask
 import flask
@@ -74,13 +74,10 @@ def commit_email():
         logging.info('Branch was deleted, skipping email.')
         return 'nope'
 
-    added = '\n'.join(map(lambda f: 'A {0}'.format(f),
-                          json_dict['head_commit']['added']))
-    removed = '\n'.join(map(lambda f: 'R {0}'.format(f),
-                            json_dict['head_commit']['removed']))
-    modified = '\n'.join(map(lambda f: 'M {0}'.format(f),
-                             json_dict['head_commit']['modified']))
-    changes = '\n'.join(filter(lambda i: bool(i), [added, removed, modified]))
+    added = '\n'.join(['A {0}'.format(f) for f in json_dict['head_commit']['added']])
+    removed = '\n'.join(['R {0}'.format(f) for f in json_dict['head_commit']['removed']])
+    modified = '\n'.join(['M {0}'.format(f) for f in json_dict['head_commit']['modified']])
+    changes = '\n'.join([i for i in [added, removed, modified] if bool(i)])
 
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
