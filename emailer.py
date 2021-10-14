@@ -138,8 +138,8 @@ def _send_email(msg_info):
     smtp_server = "smtp.mailgun.org"
     login = os.environ.get('MAILGUN_LOGIN', None)
     password = os.environ.get('MAILGUN_PASSWORD', None)
-    loginA = login.encode("ascii")
-    passwordA = password.encode("ascii")
+    loginA = login
+    passwordA = password
 
     body = """Branch: {branch}
     Revision: {revision}
