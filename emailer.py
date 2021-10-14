@@ -90,8 +90,11 @@ def commit_email():
         githubData = requests.get(url, headers={"Accept":"application/vnd.github.v3+json"}, timeout=10).json()
         logging.info(f"Github Data: {githubData}")
         status = githubData.status_code
+        logging.info("Test")
         logging.info(f"Github Response: {status}")
+        logging.info("Test2")
         prURL = githubData[0]['html_url']
+        logging.info("Test3")
     except Exception as e:
         prURL = "Unavailable"
         logging.error(f'Could not getch PR url from github: {e}')
