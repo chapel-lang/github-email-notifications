@@ -91,7 +91,7 @@ def commit_email():
         logging.info(f"Github Data: {githubData}")
         jData = githubData.json()
         logging.info(f"JData: {jData}")
-        cData = githubData.content()
+        cData = githubData.content
         logging.info(f"CData: {cData}")
         status = githubData.status_code
         logging.info(f"Github Response: {status}")
