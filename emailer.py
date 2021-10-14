@@ -87,7 +87,7 @@ def commit_email():
     url = "https://api.github.com/repos/{}/{}/commits/{}/pulls".format(GITHUB_OWNER,GITHUB_REPO,json_dict['after'])
     logging.info(f"URL: {url}")
     try:
-        githubData = requests.get(url, timeout=10).json()
+        githubData = requests.get(url, headers={"Accept":"application/vnd.github.v3+json"}, timeout=10).json()
         logging.info(f"Github Data: {githubData}")
         prURL = githubData[0]['html_url']
     except Exception as e:
