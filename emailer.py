@@ -84,7 +84,7 @@ def commit_email():
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
 
-    url = f"https://api.github.com/repos/{0}/{1}/commits/{2}/pulls".format(GITHUB_OWNER,GITHUB_REPO,json_dict['after'])
+    url = "https://api.github.com/repos/{}/{}/commits/{}/pulls".format(GITHUB_OWNER,GITHUB_REPO,json_dict['after'])
     logging.info(f"URL: {url}")
     try:
         prURL = requests.get(url, timeout=10).json()[0]['html_url']
