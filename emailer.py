@@ -88,10 +88,10 @@ def commit_email():
     logging.info(f"URL: {url}")
     try:
         githubData = requests.post(url, headers={"Accept":"application/vnd.github.v3+json"}, timeout=10)
-        jData = githubData.json()
-        cData = githubData.content()
         logging.info(f"Github Data: {githubData}")
+        jData = githubData.json()
         logging.info(f"JData: {jData}")
+        cData = githubData.content()
         logging.info(f"CData: {cData}")
         status = githubData.status_code
         logging.info(f"Github Response: {status}")
