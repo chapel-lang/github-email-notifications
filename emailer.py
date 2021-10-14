@@ -16,8 +16,11 @@ app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
-GITHUB_OWNER = "chapel-lang"
-GITHUB_REPO = "chapel"
+#GITHUB_OWNER = "chapel-lang"
+#GITHUB_REPO = "chapel"
+
+GITHUB_OWNER = "Maxrimus"
+GITHUB_REPO = "TestRepo"
 
 @app.before_first_request
 def init_rollbar():
