@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 
 from flask import Flask
 import flask
@@ -8,14 +8,16 @@ import os
 import os.path
 import rollbar
 import rollbar.contrib.flask
-import sha
 import smtplib
+import requests
 from email.mime.text import MIMEText
 
 app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
+GITHUB_OWNER = "chapel-lang"
+GITHUB_REPO = "chapel"
 
 @app.before_first_request
 def init_rollbar():
@@ -71,16 +73,20 @@ def commit_email():
         logging.info('Branch was deleted, skipping email.')
         return 'nope'
 
-    added = '\n'.join(map(lambda f: 'A {0}'.format(f),
-                          json_dict['head_commit']['added']))
-    removed = '\n'.join(map(lambda f: 'R {0}'.format(f),
-                            json_dict['head_commit']['removed']))
-    modified = '\n'.join(map(lambda f: 'M {0}'.format(f),
-                             json_dict['head_commit']['modified']))
-    changes = '\n'.join(filter(lambda i: bool(i), [added, removed, modified]))
+    added = '\n'.join(['A {0}'.format(f) for f in json_dict['head_commit']['added']])
+    removed = '\n'.join(['R {0}'.format(f) for f in json_dict['head_commit']['removed']])
+    modified = '\n'.join(['M {0}'.format(f) for f in json_dict['head_commit']['modified']])
+    changes = '\n'.join([i for i in [added, removed, modified] if bool(i)])
 
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
+
+    githubUrl = "https://api.github.com/repos/{}/{}/commits/{}/pulls".format(GITHUB_OWNER,GITHUB_REPO,json_dict['after'])
+    try:
+        prURL = requests.get(url=githubUrl, headers={"Accept":"application/vnd.github.v3+json"}, timeout=10).json()[0]['html_url']
+    except Exception as e:
+        prURL = "Unavailable"
+        logging.error(f'Could not getch PR url from github: {e}')
 
     msg_info = {
         'repo': json_dict['repository']['full_name'],
@@ -91,6 +97,7 @@ def commit_email():
         'pusher': json_dict['pusher']['name'],
         'pusher_email': pusher_email,
         'compare_url': json_dict['compare'],
+        'pr_url': prURL,
     }
     _send_email(msg_info)
 
@@ -131,12 +138,11 @@ def _send_email(msg_info):
     smtp_server = "smtp.mailgun.org"
     login = os.environ.get('MAILGUN_LOGIN', None)
     password = os.environ.get('MAILGUN_PASSWORD', None)
-    loginA = login.encode("ascii")
-    passwordA = password.encode("ascii")
 
     body = """Branch: {branch}
     Revision: {revision}
     Author: {pusher}
+    Link: {pr_url}
     Log Message:
 
     {message}
@@ -159,7 +165,7 @@ def _send_email(msg_info):
 
     server = smtplib.SMTP(smtp_server, port)
     server.set_debuglevel(1)
-    server.login(loginA, passwordA)
+    server.login(login, password)
     server.sendmail(sender, recipients, message.as_string())
     server.quit()
 
@@ -194,7 +200,7 @@ def _get_subject(repo, message):
 def _valid_signature(gh_signature, body, secret):
     """Returns True if GitHub signature is valid. False, otherwise."""
     def to_str(s):
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             return str(s)
         else:
             return s
@@ -203,6 +209,6 @@ def _valid_signature(gh_signature, body, secret):
     body = to_str(body)
     secret = to_str(secret)
 
-    expected_hmac = hmac.new(secret, body, sha)
+    expected_hmac = hmac.new(secret.encode('utf8'), body, digestmod="sha1")
     expected_signature = to_str('sha1=' + expected_hmac.hexdigest())
     return hmac.compare_digest(expected_signature, gh_signature)
