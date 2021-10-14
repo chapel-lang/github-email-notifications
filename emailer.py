@@ -212,6 +212,6 @@ def _valid_signature(gh_signature, body, secret):
     body = to_str(body)
     secret = to_str(secret)
 
-    expected_hmac = hmac.new(secret, body, hashlib.sha1)
+    expected_hmac = hmac.new(secret, body, digestmod="sha1")
     expected_signature = to_str('sha1=' + expected_hmac.hexdigest())
     return hmac.compare_digest(expected_signature, gh_signature)
