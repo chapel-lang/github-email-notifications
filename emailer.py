@@ -84,10 +84,10 @@ def commit_email():
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
 
-    url = "https://api.github.com/repos/{}/{}/commits/{}/pulls".format(GITHUB_OWNER,GITHUB_REPO,json_dict['after'])
-    logging.info(f"URL: {url}")
+    githubUrl = "https://api.github.com/repos/{}/{}/commits/{}/pulls".format(GITHUB_OWNER,GITHUB_REPO,json_dict['after'])
+    logging.info(f"URL: {githubUrl}")
     try:
-        githubData = requests.post(url, headers={"Accept":"application/vnd.github.v3+json"}, timeout=10)
+        githubData = requests.post(url=githubUrl, headers={"Accept":"application/vnd.github.v3+json"}, timeout=10)
         logging.info(f"Github Data: {githubData}")
         jData = githubData.json()
         logging.info(f"JData: {jData}")
