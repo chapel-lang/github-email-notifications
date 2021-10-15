@@ -16,9 +16,6 @@ app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
-GITHUB_OWNER = "chapel-lang"
-GITHUB_REPO = "chapel"
-
 @app.before_first_request
 def init_rollbar():
     """Configure rollbar to capture exceptions."""
@@ -81,7 +78,7 @@ def commit_email():
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
 
-    githubUrl = "https://api.github.com/repos/{}/{}/commits/{}/pulls".format(GITHUB_OWNER,GITHUB_REPO,json_dict['after'])
+    githubUrl = "https://api.github.com/repos/{}/commits/{}/pulls".format(json_dict['repository']['full_name'],json_dict['after'])
     try:
         prURL = requests.get(url=githubUrl, headers={"Accept":"application/vnd.github.v3+json"}, timeout=10).json()[0]['html_url']
     except Exception as e:
