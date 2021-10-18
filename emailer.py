@@ -16,6 +16,7 @@ app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
+
 @app.before_first_request
 def init_rollbar():
     """Configure rollbar to capture exceptions."""
@@ -70,17 +71,31 @@ def commit_email():
         logging.info('Branch was deleted, skipping email.')
         return 'nope'
 
-    added = '\n'.join(['A {0}'.format(f) for f in json_dict['head_commit']['added']])
-    removed = '\n'.join(['R {0}'.format(f) for f in json_dict['head_commit']['removed']])
-    modified = '\n'.join(['M {0}'.format(f) for f in json_dict['head_commit']['modified']])
+    added = '\n'.join(['A {0}'.format(f) for f in
+                       json_dict['head_commit']['added']])
+    removed = '\n'.join(['R {0}'.format(f) for f in
+                         json_dict['head_commit']['removed']])
+    modified = '\n'.join(['M {0}'.format(f) for f in
+                          json_dict['head_commit']['modified']])
     changes = '\n'.join([i for i in [added, removed, modified] if bool(i)])
 
     pusher_email = '{0} <{1}>'.format(json_dict['pusher']['name'],
                                       json_dict['pusher']['email'])
 
-    githubUrl = "https://api.github.com/repos/{}/commits/{}/pulls".format(json_dict['repository']['full_name'],json_dict['after'])
+    githubUrl = "https://api.github.com/repos/{}/commits/{}/pulls".format(
+        json_dict['repository']['full_name'], json_dict['after'])
+    logging.info(f"Github URL: {githubUrl}")
     try:
-        prURL = requests.get(url=githubUrl, headers={"Accept":"application/vnd.github.v3+json"}, timeout=10).json()[0]['html_url']
+        response = requests.get(url=githubUrl,
+                                headers={"Accept":
+                                         "application/vnd.github.v3+json"},
+                                timeout=10)
+        logging.info(f"Response: {response}")
+        logging.info(f"Status: {response.status_code}")
+        responseJSON = response.json()
+        logging.info(f"Response JSON: {responseJSON}")
+        prURL = responseJSON[0]['html_url']
+        logging.info(f"PR URL: {prURL}")
     except Exception as e:
         prURL = "Unavailable"
         logging.error(f'Could not getch PR url from github: {e}')
@@ -206,6 +221,7 @@ def _valid_signature(gh_signature, body, secret):
     body = to_str(body)
     secret = to_str(secret)
 
-    expected_hmac = hmac.new(secret.encode('utf8'), body, digestmod="sha1")
+    expected_hmac = hmac.new(str(secret).encode('utf8'),
+                             str(body).encode('utf8'), digestmod="sha1")
     expected_signature = to_str('sha1=' + expected_hmac.hexdigest())
     return hmac.compare_digest(expected_signature, gh_signature)
