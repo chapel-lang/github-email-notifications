@@ -84,11 +84,18 @@ def commit_email():
 
     githubUrl = "https://api.github.com/repos/{}/commits/{}/pulls".format(
         json_dict['repository']['full_name'], json_dict['after'])
+    logging.info(f"Github URL: {githubUrl}")
     try:
-        prURL = requests.get(url=githubUrl,
-                             headers={"Accept":
-                                      "application/vnd.github.v3+json"},
-                             timeout=10).json()[0]['html_url']
+        response = requests.get(url=githubUrl,
+                                headers={"Accept":
+                                         "application/vnd.github.v3+json"},
+                                timeout=10)
+        logging.info(f"Response: {response}")
+        logging.info(f"Status: {response.status_code}")
+        responseJSON = response.json()
+        logging.info(f"Response JSON: {responseJSON}")
+        prURL = responseJSON[0]['html_url']
+        logging.info(f"PR URL: {prURL}")
     except Exception as e:
         prURL = "Unavailable"
         logging.error(f'Could not getch PR url from github: {e}')
