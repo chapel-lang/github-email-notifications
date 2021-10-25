@@ -213,7 +213,7 @@ def _valid_signature(gh_signature, body, secret):
     """Returns True if GitHub signature is valid. False, otherwise."""
     def to_str(s):
         if isinstance(s, str):
-            return str(s)
+            return bytes(s, encoding='utf-8')
         else:
             return s
 
@@ -221,7 +221,7 @@ def _valid_signature(gh_signature, body, secret):
     body = to_str(body)
     secret = to_str(secret)
 
-    expected_hmac = hmac.new(str(secret).encode('utf8'),
-                             str(body).encode('utf8'), digestmod="sha1")
+    expected_hmac = hmac.new(secret,
+                             body, digestmod="sha1")
     expected_signature = to_str('sha1=' + expected_hmac.hexdigest())
     return hmac.compare_digest(expected_signature, gh_signature)
