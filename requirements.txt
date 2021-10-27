@@ -7,3 +7,4 @@ blinker==1.4
 gunicorn==19.7.1
 itsdangerous==0.24
 rollbar==0.13.13
+nose2==0.10.0
