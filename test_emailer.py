@@ -342,8 +342,8 @@ class EmailerTests(unittest.TestCase):
         self.assertTrue(emailer._valid_signature(gh_sig, body, secret))
 
     def test_valid_signature__true__unicode(self):
-        """Verify _valid_signature returns true when signature matches, even if github\
-        signature is unicode."""
+        """Verify _valid_signature returns true when signature matches,\
+        even if github signature is unicode."""
         body = '{"rock": "on"}'
         secret = str(uuid.uuid4())
         h = hmac.new(secret.encode('utf8'), body.encode('utf8'),
