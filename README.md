@@ -16,6 +16,10 @@ project uses the [feature branch workflow][fb_workflow], and always includes a
 nice summary in the merge commit messages. So, the merge message (actually the
 head commit in the push event) is the only one included in the email.
 
+Also be aware of this issue (https://github.com/Cray/chapel-private/issues/3799)
+"Identifying and Implement new solution for Heroku Commit Emailer" (so you may
+want to check there to see if the info is out-of-date).
+
 [chapel]: http://chapel-lang.org/
 [fb_workflow]: https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow/
 [push_events]: https://developer.github.com/v3/activity/events/types/#pushevent
