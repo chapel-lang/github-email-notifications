@@ -1,3 +1,5 @@
+# Note: This application is no longer used for the Chapel team's commit/PR emailing, in favor of a [new email workflow](https://github.com/chapel-lang/chapel/blob/main/.github/workflows/email.yml).
+
 github-email-notifications
 ==========================
 
